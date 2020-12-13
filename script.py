@@ -4,12 +4,14 @@ from EmailUser import EmailUser
 from Sqllite import Sqllite
 from EmailData import EmailData
 from datetime import datetime
+from datetime import date
 
 import email
 import smtplib
 import imaplib
 import socket   
 import uuid 
+import os
 
 
 def login(username, password, server):
@@ -18,9 +20,9 @@ def login(username, password, server):
 def sendEmail(sender, recever, message, server):
 	login(sender.get_username(), sender.get_password(), server)
 	print(sender.get_username())
-	print(recever.get_username())
-	server.sendmail(sender.get_username(), recever.get_username(), message.as_string())
-	log(sender, True)
+	print(recever)
+	server.sendmail(sender.get_username(), recever, message.as_string())
+	log(sender.get_username(), "[send]")
 
 def readEmail(u):
 	EMAIL = u.get_username()
@@ -47,57 +49,154 @@ def readEmail(u):
 				html_body = part.get_payload(decode=True)
 				email_data['body'] = html_body.decode()
 		my_message.append(EmailData(email_data['from'], email_data['to'], email_data['subject'], email_data['date'],email_data['body']))
-		saveEmail(email_message, email_data['subject'])
-	log(u, False)
+	log(u.get_username(), "[read]")
 	return my_message
 
-def log(email, isSend):
+def log(username, title):
 	hostname = socket.gethostname()    
 	IPAddr = socket.gethostbyname(hostname)    
 	f = open("log.txt", "a")
-	if isSend:
-		f.write( "[send] " + str(datetime.now()) + " " + email.get_username() + " " + str(IPAddr) + "\n")	
-	else:
-		f.write( "[receive] " + str(datetime.now()) + " " + email.get_username() + " " + str(IPAddr) + "\n")	
+	f.write(title + " " + str(datetime.now()) + " " + username + " " + str(IPAddr) + "\n")
 
 	f.close() 
 
 def saveEmail(email, subject):
-	f = open(subject + " " + str(uuid.uuid1()) + ".txt",  "w")
+	f = open("saves/" + date.today() + str(uuid.uuid1()) + ".txt",  "w")
 	f.write(str(email))
 	f.close()
 
-u = EmailUser("jjesuisla774@gmail.com", "P4t4t3_01", "imap.gmail.com")
-sq = Sqllite()
-conn = sq.create_connection(r"usertest.db")
-#sq.createDataUser(conn)
-#sq.createEmailData(conn)
+def interface():	
+	print("Bienvenue dans la meilleur boite mail au monde !")
+	print("Quelle boîte mail voulez vous utilisez ?")
+	users = getEmailUsers()	
+	for i in range(0, len(users)):
+		print(str(i) + " " + str(users[i]))
+	ip = input()
+	u = users[int(ip)]
+	user = EmailUser(u[0], u[1], u[2])
+	log(user.get_username(), "[login]")
+	print("vous avez selectionné la boîte mail " + str(user.get_username()))
 
-#sq.insertUser(u, conn)
-sq.selectUser(conn)
-emails = readEmail(u)
-for e in emails:
-	sq.insertData(e, conn)
+	print("Que voulez vous faire ? (1 Send , 2 Read, 3 Sort, 4 Log, 5 LogOut)")
+	ip = input()
+	if ip == "1":
+		interfaceSend(user)
+		return True
+	elif ip == "2":
+		interfaceReadNew(user)
+		interfaceRead(user)
+		return True
+	elif ip == "3":
+		sortEmailData()
+		return True
+	elif ip == "4":
+		readLog()
+		return True
+	elif ip == "5":
+		log(user.get_username(), "[logout]")
+		return False
 
-sq.selectData(conn)
-print( "\n" + "Sort by Sender")
-sq.selectDataOrderBySender(conn)
-sq.close(conn)
+def getEmailUsers():
+	sq = Sqllite()
+	conn = sq.create_connection(r"usertest.db")
+	emailUser = sq.selectUser(conn)
+	sq.close(conn)
+	return emailUser
 
+def getMessage(user, subject, recever, msg):
+	message = MIMEMultipart('alternative')
+	message['Subject'] = subject
+	message['From'] = user.get_username()
+	message['To'] = recever
+	message.attach(MIMEText(msg, 'plain'))
+	return message
 
-message = MIMEMultipart('alternative')
-message['Subject'] = 'Test'
-message['From'] = 'jjesuisla774@gmail.com'
-message['To'] = 'jjesuisla774@gmail.com'
+def getServer(user):
+	server = smtplib.SMTP(user.get_server(), 587)
+	server.starttls()
+	return server
 
-message.attach(MIMEText('salut le monde', 'plain'))
+def interfaceSend(user):
+	print("Send")
+	print("Destinataire :")
+	ipDes = input()
+	print("Sujet :")
+	ipSuj = input()
+	print("Message :")
+	ipMsg = input()
+	message = getMessage(user, ipSuj, ipDes, ipMsg)
+	server = getServer(user)
+	sendEmail(user, ipDes, message, server)
 
-server = smtplib.SMTP('smtp.gmail.com', 587)
-server.starttls()
-#server.login('jjesuisla774@gmail.com', 'P4t4t3_01')
-#server.sendmail('jjesuisla774@gmail.com', 'jjesuisla774@gmail.com', message.as_string())
-sendEmail(u, u, message, server)
-server.quit()
+def interfaceReadNew(user):
+	emails = readEmail(user)	
+	for e in emails:
+		saveEmailData(e)
+
+def interfaceRead(user):
+	a = getEmailData()
+	for i in range(0, len(a)):
+		ed = EmailData(a[i][0], a[i][1], a[i][2], a[i][3], a[i][4])
+		print("[" +str(i) + "] " + ed.get_resume())
+	print("Quelle mail voulez vous lire ?")
+	ip = input()
+	ed = EmailData(a[int(ip)][0], a[int(ip)][1], a[int(ip)][2],a[int(ip)][3], a[int(ip)][4])
+	print(a[int(ip)][4])
+	print("Sauvegarder le mail dans un fichier lisible, reply ou rien ? (0/1/2)")
+	ip = input()
+	if ip == "0":
+		saveEmail(ed, ed.get_subject())
+	elif ip == "1":
+		print("Message :")
+		ipMsg = input()
+		message = getMessage(user, "RE :" + ed.get_subject(), ed.get_sender(), ipMsg)
+		server = getServer(user)		
+		sendEmail(user, ed.get_sender(), message, server)
+
+def saveEmailData(emailData):
+	sq = Sqllite()
+	conn = sq.create_connection(r"usertest.db")
+	sq.insertData(emailData, conn)
+	sq.close(conn)
+
+def getEmailData():
+	sq = Sqllite()
+	conn = sq.create_connection(r"usertest.db")
+	emailData = sq.selectData(conn)
+	sq.close(conn)
+	return emailData
+
+def sortEmailData():
+	sq = Sqllite()
+	conn = sq.create_connection(r"usertest.db")
+	sq.selectData(conn)
+	print( "\n" + "Sort by Sender")
+	sq.selectDataOrderBySender(conn)
+	sq.close(conn)
+
+def readLog():
+	f = open("log.txt", "r")
+	print(f.read())
+	f.close()
+
+def initi():
+	f = open("init.txt", "r")
+	if f.read() == "":
+		sq = Sqllite()
+		conn = sq.create_connection(r"usertest.db")
+		sq.createDataUser(conn)
+		sq.createEmailData(conn)
+		sq.insertUser(EmailUser("jjesuisla774@gmail.com", "P4t4t3_01", "imap.gmail.com"), conn)
+		sq.close(conn)
+		f.close()
+		f = open("init.txt", "w")
+		f.write("0")
+	f.close()
+
+initi()
+stillContinue = True
+while stillContinue == True:
+	stillContinue = interface()
 
 
 

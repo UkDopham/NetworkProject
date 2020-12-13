@@ -50,18 +50,24 @@ class Sqllite:
         conn.commit()
 
     def selectUser(self,conn):
+        a = []
         cur = conn.cursor()
         cur.execute("SELECT * FROM EmailUser")
         rows = cur.fetchall()
         for row in rows:
-            print(row)
+            a.append(row)
+            #print(row)
+        return a
 
     def selectData(self, conn):
+        a = []
         cur = conn.cursor()
         cur.execute("SELECT * FROM EmailData")
         rows = cur.fetchall()
         for row in rows:
-            print(row)
+            a.append(row)
+            #print(row)
+        return a
 
     def selectDataOrderByDate(self, conn):        
         cur = conn.cursor()

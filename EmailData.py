@@ -21,5 +21,8 @@ class EmailData:
 	def get_content(self):
 		return self.content
 
+	def get_resume(self):
+		return "sender " + self.sender + ", recever " + self.recever + ", subject " + self.subject
+
 	def __str__(self):
 		return "sender " + self.sender + ", recever " + self.recever + ", subject " + self.subject + ", date " + self.date + ", \n content " + self.content
