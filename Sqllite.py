@@ -22,7 +22,7 @@ class Sqllite:
         cur = conn.cursor()
         sql =  "DROP TABLE IF EXISTS EmailUser;"
         cur.execute(sql)
-        sql = ''' CREATE TABLE EmailUser (Username TEXT PRIMARY KEY, Password TEXT, Server TEXT); '''
+        sql = ''' CREATE TABLE EmailUser (Username TEXT, Password TEXT, Server TEXT); '''
         cur.execute(sql)
         conn.commit()
         return cur.lastrowid
@@ -59,29 +59,30 @@ class Sqllite:
             #print(row)
         return a
 
-    def selectData(self, conn):
+    def selectData(self, conn, user):
         a = []
         cur = conn.cursor()
-        cur.execute("SELECT * FROM EmailData")
+        cur.execute("SELECT * FROM EmailData WHERE Recever = " + "'" + user.get_username()+ "'" )
         rows = cur.fetchall()
         for row in rows:
             a.append(row)
             #print(row)
         return a
 
-    def selectDataOrderByDate(self, conn):        
+    def selectDataOrderByDate(self, conn, user):        
         cur = conn.cursor()
-        cur.execute("SELECT * FROM EmailData order by DateP")
+        cur.execute("SELECT * FROM EmailData WHERE Recever = " + "'" + user.get_username() + "'" + " order by DateP")
         rows = cur.fetchall()
         for row in rows:
             print(row)
 
-    def selectDataOrderBySender(self, conn):        
+    def selectDataOrderBySender(self, conn, user):        
         cur = conn.cursor()
-        cur.execute("SELECT * FROM EmailData order by Sender")
+        cur.execute("SELECT * FROM EmailData WHERE Recever = " +  "'" +user.get_username() + "'" + " order by Sender")
         rows = cur.fetchall()
         for row in rows:
             print(row)
+
 
     def close(self, conn):
         conn.close()
