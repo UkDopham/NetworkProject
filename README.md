@@ -1,4 +1,7 @@
 # NetworkProject
+Estimated working time (20 hours).
+
+
 Installation :
 No libary should be download to run this program properly.
 
