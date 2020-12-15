@@ -14,21 +14,23 @@ import uuid
 import os
 
 
-def login(username, password, server):
+def login(username, password):
 	server.login(username, password)
 
-def sendEmail(sender, recever, message, server):
-	login(sender.get_username(), sender.get_password(), server)
-	print(sender.get_username())
-	print(recever)
-	server.sendmail(sender.get_username(), recever, message.as_string())
+def sendEmail(sender, recever, message):
+	mail = getServerSMTP(sender)
+	login(sender.get_username(), sender.get_password())
+	#print(sender.get_username())
+	#print(recever)
+	mail.sendmail(sender.get_username(), recever, message.as_string())
 	log(sender.get_username(), "[send]")
+	mail.quit()
 
 def readEmail(u):
 	EMAIL = u.get_username()
 	PASSWORD = u.get_password()
 	SERVER = u.get_server()
-	mail = imaplib.IMAP4_SSL("imap." + SERVER)
+	mail = getServerIMAP(u)
 	mail.login(EMAIL, PASSWORD)
 	mail.select("inbox")
 	_, search_data = mail.search(None, 'UNSEEN')
@@ -49,6 +51,7 @@ def readEmail(u):
 				html_body = part.get_payload(decode=True)
 				email_data['body'] = html_body.decode()
 		my_message.append(EmailData(email_data['from'], email_data['to'], email_data['subject'], email_data['date'],email_data['body']))
+	mail.close()
 	log(u.get_username(), "[read]")
 	return my_message
 
@@ -92,7 +95,7 @@ def interface():
 		interfaceRead(user)
 		return True
 	elif ip == "3":
-		sortEmailData(user)
+		interfaceSort(user)
 		return True
 	elif ip == "4":
 		readLog()
@@ -128,11 +131,14 @@ def getMessage(user, subject, recever, msg):
 	message.attach(MIMEText(msg, 'plain'))
 	return message
 
-def getServer(user):
+def getServerSMTP(user):
 	value = "smtp." + user.get_server()
 	server = smtplib.SMTP(value, 587)
 	server.starttls()
 	return server
+
+def getServerIMAP(user):
+	return imaplib.IMAP4_SSL("imap." + user.get_server())
 
 def interfaceSend(user):
 	print("Send")
@@ -143,8 +149,7 @@ def interfaceSend(user):
 	print("Message :")
 	ipMsg = input()
 	message = getMessage(user, ipSuj, ipDes, ipMsg)
-	server = getServer(user)
-	sendEmail(user, ipDes, message, server)
+	sendEmail(user, ipDes, message)
 
 def interfaceReadNew(user):
 	emails = readEmail(user)	
@@ -171,6 +176,20 @@ def interfaceRead(user):
 		server = getServer(user)		
 		sendEmail(user, ed.get_sender(), message, server)
 
+def interfaceSort(user):
+	print("Quel tri ? (Sender/ Subject) (0/1)")
+	ip = input()
+	sq = Sqllite()
+	conn = sq.create_connection(r"usertest.db")	
+	sq.selectData(conn, user)
+	if ip == "0":
+		print( "\n" + "Sort by Sender")
+		sq.selectDataOrderBySender(conn, user)
+	else :
+		print( "\n" + "Sort by Subject")
+		sq.selectDataOrderBySubject(conn, user)
+	sq.close(conn)
+
 def saveEmailData(emailData):
 	sq = Sqllite()
 	conn = sq.create_connection(r"usertest.db")
@@ -189,14 +208,6 @@ def getEmailData(user):
 	emailData = sq.selectData(conn, user)
 	sq.close(conn)
 	return emailData
-
-def sortEmailData(user):
-	sq = Sqllite()
-	conn = sq.create_connection(r"usertest.db")
-	sq.selectData(conn, user)
-	print( "\n" + "Sort by Sender")
-	sq.selectDataOrderBySender(conn, user)
-	sq.close(conn)
 
 def readLog():
 	f = open("log.txt", "r")

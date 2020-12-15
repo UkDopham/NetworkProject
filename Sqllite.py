@@ -78,10 +78,18 @@ class Sqllite:
 
     def selectDataOrderBySender(self, conn, user):        
         cur = conn.cursor()
-        cur.execute("SELECT * FROM EmailData WHERE Recever = " +  "'" +user.get_username() + "'" + " order by Sender")
+        cur.execute("SELECT * FROM EmailData WHERE Recever = " +  "'" +user.get_username() + "'" + " order by upper(Sender)")
         rows = cur.fetchall()
         for row in rows:
             print(row)
+
+    def selectDataOrderBySubject(self, conn, user):        
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM EmailData WHERE Recever = " +  "'" +user.get_username() + "'" + " order by upper(Subject)")
+        rows = cur.fetchall()
+        for row in rows:
+            print(row)
+
 
 
     def close(self, conn):
