@@ -14,12 +14,10 @@ import uuid
 import os
 
 
-def login(username, password):
-	server.login(username, password)
 
 def sendEmail(sender, recever, message):
 	mail = getServerSMTP(sender)
-	login(sender.get_username(), sender.get_password())
+	mail.login(sender.get_username(), sender.get_password())
 	#print(sender.get_username())
 	#print(recever)
 	mail.sendmail(sender.get_username(), recever, message.as_string())
@@ -41,7 +39,6 @@ def readEmail(u):
 		_, b = data[0]
 		email_message = email.message_from_bytes(b)
 		for header in ['subject', 'to', 'from', 'date']:
-			#print("{}: {}".format(header, email_message[header]))
 			email_data[header] = email_message[header]
 		for part in email_message.walk():
 			if part.get_content_type() == "text/plain":
@@ -69,7 +66,6 @@ def saveEmail(email, subject):
 	f.close()
 
 def interface():	
-	print("Bienvenue dans la meilleur boite mail au monde !")
 	print("Ajouter un nouvel utilisateur ? Oui/Non (0/1)")
 	ip = input()
 	if ip == "0":
@@ -173,8 +169,7 @@ def interfaceRead(user):
 		print("Message :")
 		ipMsg = input()
 		message = getMessage(user, "RE :" + ed.get_subject(), ed.get_sender(), ipMsg)
-		server = getServer(user)		
-		sendEmail(user, ed.get_sender(), message, server)
+		sendEmail(user, ed.get_sender(), message)
 
 def interfaceSort(user):
 	print("Quel tri ? (Sender/ Subject) (0/1)")
