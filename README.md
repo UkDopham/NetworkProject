@@ -3,7 +3,15 @@ Estimated working time (20 hours).
 
 
 Installation :
-No library should be download to run this program properly.
+No library should be download to run this program propery however we used the following libraries : 
+email,
+smtplib,
+imaplib,
+socket,
+uuid, 
+os,
+datetime,
+
 
 
 
