@@ -3,7 +3,7 @@ Estimated working time (20 hours).
 
 
 Installation :
-No libary should be download to run this program properly.
+No library should be download to run this program properly.
 
 
 
