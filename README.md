@@ -1,7 +1,7 @@
 # NetworkProject
-Projet Network fait par Lionel, Eliott, Antoine et Alexandre IOS1
 Installation :
 No libary should be download to run this program properly.
+You NEED to download SQLITE3.
 
 
 
